@@ -1,0 +1,139 @@
+name: FlavorFind
+
+entities:
+  User:
+    authenticable: true
+    properties:
+      - name
+      - name: email
+        type: email
+      - name: role
+        type: choice
+        options:
+          values: [diner, owner, admin]
+        default: diner
+    policies:
+      create:
+        - access: admin
+      read:
+        - access: restricted
+          allow: User
+          condition: self
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+      delete:
+        - access: admin
+      signup:
+        - access: public
+
+  Restaurant:
+    properties:
+      - name: name
+        type: string
+      - name: description
+        type: text
+      - name: address
+        type: string
+      - name: coverImage
+        type: image
+        options:
+          sizes:
+            thumbnail:
+              width: 400
+              height: 250
+            large:
+              width: 1200
+              height: 750
+    belongsTo:
+      - name: owner
+        entity: User
+    policies:
+      create:
+        - access: restricted
+          allow: User
+      read:
+        - access: public
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+      delete:
+        - access: restricted
+          allow: User
+          condition: self
+
+  MenuItem:
+    properties:
+      - name: name
+        type: string
+      - name: description
+        type: text
+      - name: price
+        type: money
+        options:
+          currency: 'USD'
+      - name: photo
+        type: image
+        options:
+          sizes:
+            small:
+              width: 100
+              height: 100
+    belongsTo:
+      - Restaurant
+    policies:
+      create:
+        - access: restricted
+          allow: User
+      read:
+        - access: public
+      update:
+        - access: restricted
+          allow: User
+          condition: self # Condition applies to the owner of the parent Restaurant
+      delete:
+        - access: restricted
+          allow: User
+          condition: self # Condition applies to the owner of the parent Restaurant
+
+  Order:
+    properties:
+      - name: totalPrice
+        type: money
+        options:
+          currency: 'USD'
+      - name: status
+        type: choice
+        options:
+          values: [pending, confirmed, delivered, cancelled]
+        default: pending
+    belongsTo:
+      - name: customer
+        entity: User
+    belongsToMany:
+      - MenuItem
+    policies:
+      create:
+        - access: restricted
+          allow: User
+      read:
+        - access: restricted
+          allow: User
+          condition: self
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+      delete:
+        - access: admin
+
+
+# Health check endpoint for connection testing
+endpoints:
+  health:
+    path: /api/health
+    method: GET
+    policies: []
+    handler: healthCheck
